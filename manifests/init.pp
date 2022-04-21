@@ -39,8 +39,14 @@
 #   Boolean to toggle debug
 # @param forge_server_script
 #   Name of the script which runs the forge server, depending on ruby version installed
+# @param user
+#   Name of the system user for forge-server
+# @param user_homedir
+#   Path to the system users home dir
+# @param provider
+#   Whether to use system ruby or puppet ruby
 #
-# @examples
+# @example
 #
 #  class { '::forge_server':
 #    scl => 'ruby193'
