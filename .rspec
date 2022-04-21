@@ -1,3 +1,2 @@
---format RspecJunitFormatter
---out reports/rspec.xml
+--color
 --format documentation

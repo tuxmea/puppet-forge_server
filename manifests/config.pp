@@ -5,64 +5,64 @@
 class forge_server::config {
 
   # Scope config variables for templates
-  $user = $::forge_server::user
-  $pidfile = $::forge_server::pidfile
-  $pid_dir = dirname($::forge_server::pidfile)
-  $port = $::forge_server::port
-  $bind_host = $::forge_server::bind_host
-  $daemonize = $::forge_server::daemonize
-  $module_directory = $::forge_server::module_directory
-  $http_proxy = $::forge_server::http_proxy
-  $proxy = $::forge_server::proxy
-  $cache_basedir = $::forge_server::cache_basedir
-  $log_dir = $::forge_server::log_dir
-  $debug = $::forge_server::debug
-  $scl = $::forge_server::scl
-  $provider = $::forge_server::provider
-  $forge_server_script = $::forge_server::forge_server_script
+  $user                = $forge_server::user
+  $pidfile             = $forge_server::pidfile
+  $pid_dir             = dirname($forge_server::pidfile)
+  $port                = $forge_server::port
+  $bind_host           = $forge_server::bind_host
+  $daemonize           = $forge_server::daemonize
+  $module_directory    = $forge_server::module_directory
+  $http_proxy          = $forge_server::http_proxy
+  $proxy               = $forge_server::proxy
+  $cache_basedir       = $forge_server::cache_basedir
+  $log_dir             = $forge_server::log_dir
+  $debug               = $forge_server::debug
+  $scl                 = $forge_server::scl
+  $provider            = $forge_server::provider
+  $forge_server_script = $forge_server::forge_server_script
 
   file { '/etc/default/puppet-forge-server':
-    ensure  => present,
+    ensure  => file,
     owner   => 'root',
     group   => 'root',
     mode    => '0644',
-    content => template("${module_name}/${::osfamily}/puppet-forge-server.default.erb")
+    content => template("${module_name}/${facts['os']['family']}/puppet-forge-server.default.erb")
   }
 
   # On a systemd server create config file for tmpfiles.d
-  case $::operatingsystem {
+  case $facts['os']['name'] {
     'RedHat', 'CentOS', 'Fedora', 'Scientific', 'OracleLinux', 'SLC': {
-      if versioncmp($::operatingsystemmajrelease, '7') >= 0 {
+      if versioncmp($facts['os']['release']['major'], '7') >= 0 {
         $unit_file_path = '/etc/systemd/system/puppet-forge-server.service'
         $unit_file_template = "${module_name}/puppet-forge-server.service.erb"
       }
     }
     'SLES': {
-      if versioncmp($::operatingsystemmajrelease, '12') >= 0 {
+      if versioncmp($facts['os']['release']['major'], '12') >= 0 {
         $unit_file_path = '/usr/lib/systemd/system/puppet-forge-server.service'
-        $unit_file_template = "${module_name}/${::osfamily}/puppet-forge-server.service.erb"
+        $unit_file_template = "${module_name}/${facts['os']['family']}/puppet-forge-server.service.erb"
       }
     }
     'Ubuntu': {
-      if versioncmp($::operatingsystemmajrelease, '15') >= 0 {
+      if versioncmp($facts['os']['release']['major'], '15') >= 0 {
         $unit_file_path = '/etc/systemd/system/puppet-forge-server.service'
-        $unit_file_template = "${module_name}/${::osfamily}/puppet-forge-server.service.erb"
+        $unit_file_template = "${module_name}/${facts['os']['family']}/puppet-forge-server.service.erb"
       }
     }
     default: {
     }
   }
 
-  if $::service_provider == 'systemd' {
+  if $facts['service_provider'] == 'systemd' {
     file { '/usr/lib/tmpfiles.d/puppet-forge-server.conf':
-      ensure  => present,
+      ensure  => file,
       owner   => 'root',
       group   => 'root',
       mode    => '0644',
       content => template("${module_name}/puppet-forge-server.tmpfilesd.erb")
     }
     file { $unit_file_path:
-      ensure  => present,
+      ensure  => file,
       owner   => 'root',
       group   => 'root',
       mode    => '0640',
@@ -76,11 +76,11 @@ class forge_server::config {
     }
   } else {
     file { '/etc/init.d/puppet-forge-server':
-      ensure  => present,
+      ensure  => file,
       owner   => 'root',
       group   => 'root',
       mode    => '0755',
-      content => template("${module_name}/${::osfamily}/puppet-forge-server.initd.erb")
+      content => template("${module_name}/${facts['os']['family']}/puppet-forge-server.initd.erb")
     }
   }
 }
