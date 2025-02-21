@@ -1,43 +1,44 @@
 {
-  "name": "parshipelite-forge_server",
-  "version": "0.5.3",
+  "name": "tuxmea-forge_server",
+  "version": "0.5.4",
   "author": "Parship Group",
   "summary": "A Puppet module to manage puppet-forge-server",
   "license": "Apache-2.0",
-  "source": "https://github.com/parship/puppet-forge_server.git",
-  "project_page": "https://github.com/parship/puppet-forge_server",
-  "issues_url": "https://github.com/parship/puppet-forge_server/issues",
+  "source": "https://github.com/tuxmea/puppet-forge_server.git",
+  "project_page": "https://github.com/tuxmea/puppet-forge_server",
+  "issues_url": "https://github.com/tuxmea/puppet-forge_server/issues",
   "dependencies": [
     {
       "name": "puppetlabs-stdlib",
-      "version_requirement": ">= 4.10.0 < 9.0.0"
+      "version_requirement": ">= 4.10.0 < 10.0.0"
     }
   ],
   "operatingsystem_support": [
     {
       "operatingsystem": "RedHat",
       "operatingsystemrelease": [
-        "7.0"
+        "8.0"
       ]
     },
     {
       "operatingsystem": "Ubuntu",
       "operatingsystemrelease": [
-        "18.04",
-        "16.04"
+        "22.04",
+        "24.04"
       ]
     },
     {
       "operatingsystem": "SLES",
       "operatingsystemrelease": [
-        "12"
+        "12",
+        "15"
       ]
     }
   ],
   "requirements": [
     {
       "name": "puppet",
-      "version_requirement": ">= 6.21.0 < 8.0.0"
+      "version_requirement": ">= 6.21.0 < 9.0.0"
     }
   ],
   "pdk-version": "2.2.0",
