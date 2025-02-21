@@ -1,64 +1,52 @@
 # == Class: forge_server
 #
+# @summary
 # A Puppet module to manage the Puppet Forge Server service
 #
-# === Parameters
-#
-# [*package*]
+# @param package
 #   Optional override of package name
-#
-# [*scl*]
+# @param scl
 #   Name of ruby scl environment, leave undef to use system ruby
-#
-# [*scl_install_timeout*]
+# @param scl_install_timeout
 #   If using ruby scl, the timeout in seconds to allow the gem installation to run
-#
-# [*scl_install_retries*]
+# @param scl_install_retries
 #   If using ruby scl, the number of retries allowed if gem installation fails
-#
-# [*service_enable*]
+# @param service_enable
 #   Boolean if service should be enabled on boot
-#
-# [*service_ensure*]
+# @param service_ensure
 #   Service ensure state
-#
-# [*service_refresh*]
+# @param service_refresh
 #   Boolean if config changes and package changes should trigger service restart
-#
-# [*pidfile*]
+# @param pidfile
 #   Path to pidfile
-#
-# [*port*]
+# @param port
 #   Port to bind to
-#
-# [*bind_host*]
+# @param bind_host
 #   IP or host to bind to
-#
-# [*daemonize*]
+# @param daemonize
 #   Boolean if should be daemonized
-#
-# [*module_directory*]
+# @param module_directory
 #   Directory of modules to serve, can be an array of directories
-#
-# [*http_proxy*]
+# @param http_proxy
 #   Use proxyserver for http(s) connections
-#
-# [*proxy*]
+# @param proxy
 #   Proxy requests to this upstream forge url
-#
-# [*cache_basedir*]
+# @param cache_basedir
 #   Path where to store proxied / cached modules
-#
-# [*log_dir*]
+# @param log_dir
 #   Path to log directory
-#
-# [*debug*]
+# @param debug
 #   Boolean to toggle debug
-#
-# [*forge_server_script*]
+# @param forge_server_script
 #   Name of the script which runs the forge server, depending on ruby version installed
+# @param user
+#   Name of the system user for forge-server
+# @param user_homedir
+#   Path to the system users home dir
+# @param provider
+#   Whether to use system ruby or puppet ruby
 #
-# === Examples
+# @example
 #
 #  class { '::forge_server':
 #    scl => 'ruby193'
@@ -73,53 +61,46 @@
 # Copyright 2014 North Development AB
 #
 class forge_server (
-  $package             = $::forge_server::params::package,
-  $scl                 = undef,
-  $scl_install_timeout = $::forge_server::params::scl_install_timeout,
-  $scl_install_retries = $::forge_server::params::scl_install_retries,
-  $service_enable      = true,
-  $service_ensure      = 'running',
-  $service_refresh     = true,
-  $pidfile             = $::forge_server::params::pidfile,
-  $port                = $::forge_server::params::port,
-  $bind_host           = $::forge_server::params::bind_host,
-  $daemonize           = true,
-  $module_directory    = $::forge_server::params::module_directory,
-  $http_proxy          = $::forge_server::params::http_proxy,
-  $proxy               = $::forge_server::params::proxy,
-  $cache_basedir       = $::forge_server::params::cache_basedir,
-  $log_dir             = $::forge_server::params::log_dir,
-  $debug               = false,
-  $provider            = 'gem',
-  $forge_server_script = $::forge_server::params::forge_server_script,
-) inherits forge_server::params {
+  String[1]                  $package             = 'puppet-forge-server',
+  String[1]                  $user                = 'forge',
+  Stdlib::Unixpath           $user_homedir        = '/home/forge',
+  Stdlib::UnixPath           $pidfile             = '/var/run/puppet-forge-server/forge-server.pid',
+  Integer                    $port                = 8080,
+  Stdlib::Host               $bind_host           = '127.0.0.1',
+  Variant[Array[Stdlib::Unixpath], Stdlib::Unixpath] $module_directory    = '/var/lib/puppet-forge-server/modules',
+  Optional                   $proxy               = undef,
+  Stdlib::Unixpath           $cache_basedir       = '/var/lib/puppet-forge-server/cache',
+  Stdlib::Unixpath           $log_dir             = '/var/log/puppet-forge-server',
+  Enum['gem', 'puppet_gem']  $provider            = 'gem',
+  Optional                   $http_proxy          = undef,
+  Optional                   $scl                 = undef,
+  Integer                    $scl_install_timeout = 300,
+  Integer                    $scl_install_retries = 1,
+  String[1]                  $forge_server_script = 'puppet-forge-server.ruby2.1',
+  Boolean                    $service_enable      = true,
+  Enum['running', 'stopped'] $service_ensure      = 'running',
+  Boolean                    $service_refresh     = true,
+  Boolean                    $daemonize           = true,
+  Boolean                    $debug               = false,
+) {
 
   if $scl {
-    if $::osfamily == 'RedHat' {
-      validate_integer($scl_install_timeout)
-      validate_integer($scl_install_retries)
-    } else {
-      fail("SCL is not a valid configuration option for ${::osfamily} systems")
+    if $facts['os']['family'] != 'RedHat' {
+      fail("SCL is not a valid configuration option for ${facts['os']['family']} systems")
     }
   }
 
-  validate_absolute_path($module_directory)
-  validate_absolute_path($cache_basedir)
-  validate_absolute_path($log_dir)
-
   # contain class and ordering
-  anchor { '::forge_server::begin': } ->
-  class { '::forge_server::user': } ->
-  class { '::forge_server::package': } ->
-  class { '::forge_server::config': } ->
-  class { '::forge_server::files': } ->
-  class { '::forge_server::service': } ->
-  anchor { '::forge_server::end': }
+  class { 'forge_server::user': }
+  -> class { 'forge_server::package': }
+  -> class { 'forge_server::config': }
+  -> class { 'forge_server::files': }
+  -> class { 'forge_server::service': }
 
   # optional refresh
   if $service_refresh {
-    Class['::forge_server::package'] ~> Class['::forge_server::service']
-    Class['::forge_server::config'] ~> Class['::forge_server::service']
+    Class['forge_server::package'] ~> Class['forge_server::service']
+    Class['forge_server::config'] ~> Class['forge_server::service']
   }
 
 }
